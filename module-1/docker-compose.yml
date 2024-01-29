@@ -1,0 +1,59 @@
+version: "3.9"
+
+
+
+x-healthcheck: &health-common
+  healthcheck:
+    start_period: 30s
+    interval: 30s
+    timeout: 10s
+    retries: 5
+  restart: always
+
+services:
+
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ny_taxi
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    <<: *health-common
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "root"]
+    ports:
+      - "5433:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+        - 8080:80
+
+  dbeaver:
+    image: dbeaver/cloudbeaver:latest
+    container_name: dbeaver
+    ports:
+        - 8081:8978
+    volumes:
+      - dbeaver_data:/opt/cloudbeaver/workspace
+    environment:
+      USER: db_admin
+      PASSWORD: Password1
+    # --add-host=host.docker.internal:IP -> Adds host name in the container's /etc/hosts file. 
+    # This may be needed to access the database server deployed on the host machine
+    # command:
+      # "--add-host=host.docker.internal:${CB_LOCAL_HOST_ADDR}"
+    
+
+volumes:
+  dbeaver_data:
+  pg_data:
+    external: true
+    name: pg_data
