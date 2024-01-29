@@ -28,6 +28,8 @@ services:
       - "5433:5432"
 
   pgadmin:
+    profiles: # prefer dbeaver, so only run if profile set
+      - pgadmin
     image: dpage/pgadmin4
     container_name: pgadmin
     environment:
@@ -35,6 +37,9 @@ services:
       PGADMIN_DEFAULT_PASSWORD: root
     ports:
         - 8080:80
+    depends_on:    
+      postgres:
+        condition: service_healthy 
 
   dbeaver:
     image: dbeaver/cloudbeaver:latest
@@ -50,10 +55,52 @@ services:
     # This may be needed to access the database server deployed on the host machine
     # command:
       # "--add-host=host.docker.internal:${CB_LOCAL_HOST_ADDR}"
-    
+    depends_on:    
+      postgres:
+        condition: service_healthy 
+
+  ingest-data:
+    profiles:
+      - init
+    image: taxi_ingest:v001
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      CSV_URL: "https://github.com/DataTalksClub/nyc-tlc-data/releases/download/green/green_tripdata_2019-09.csv.gz"
+      CSV_ZONE_URL: "https://s3.amazonaws.com/nyc-tlc/misc/taxi+_zone_lookup.csv"    
+      TABLE_NAME: "green_taxi_data"  
+      # TABLE_NAME: "yellow_taxi_data"  
+    entrypoint: ["/bin/sh", "-c", "--"]    
+    command:
+      - |
+        echo "Ingest Data Python Pipeline"
+        python ingest_data_green.py \
+        --user=root \
+        --password=root \
+        --host=postgres  \
+        --port=5432  \
+        --db_name=ny_taxi  \
+        --table_name=$${TABLE_NAME} \
+        --csv_url=$${CSV_URL} \
+        --csv_zone_url=$${CSV_ZONE_URL}
+    depends_on:    
+      postgres:
+        condition: service_healthy 
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "4"
+    #       memory: "8G"
+    #     reservations:
+    #       cpus: "4"
+    #       memory: "8G"
+
+
+
 
 volumes:
   dbeaver_data:
   pg_data:
-    external: true
-    name: pg_data
+    # external: true
+    # name: pg_data

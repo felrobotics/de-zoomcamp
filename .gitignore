@@ -8,6 +8,8 @@ module-1/test.sql
 module-1/yellow_tripdata_2021-01.csv
 module-1/yellow_head.csv
 module-1/taxi+_zone_lookup.csv
+*.csv.gz
+*.csv.*
 
 ##-----------------------
 ## AIRFLOW SPECIFIC 

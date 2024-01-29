@@ -42,17 +42,21 @@ def main(params):
     df_zones.to_sql(name="zones", con=engine, if_exists="replace")
 
     # taxi trip data
+    print("Init data")
     df = pd.read_csv(csv_name, nrows=100)
     df.head(0).to_sql(name=table_name, con=engine, if_exists="replace")
-    df_iter = pd.read_csv(csv_name, iterator=True, chunksize=25000)
+    df_iter = pd.read_csv(
+        csv_name, iterator=True, chunksize=10000, low_memory=False, dtype="unicode"
+    )
     print(pd.io.sql.get_schema(df, name=table_name, con=engine))
 
+    print("Ingesting chuncks")
     while True:
         print("New chunck")
         t_start = time()
         df = next(df_iter)
-        df.tpep_pickup_datetime = pd.to_datetime(df.tpep_pickup_datetime)
-        df.tpep_dropoff_datetime = pd.to_datetime(df.tpep_dropoff_datetime)
+        df.lpep_pickup_datetime = pd.to_datetime(df.lpep_pickup_datetime)
+        df.lpep_dropoff_datetime = pd.to_datetime(df.lpep_dropoff_datetime)
         df.to_sql(name=table_name, con=engine, if_exists="append")
         t_end = time()
         print(f"Inserted another chunck..., took {t_end-t_start:.3f} seconds")

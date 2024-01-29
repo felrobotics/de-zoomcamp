@@ -118,9 +118,13 @@ docker build -t taxi_ingest:v001 .
 # but add the network and instead of localhost use the name of postgres container (pg)
 # change now port to 5432
 
-CSV_URL="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz"
 
-docker run -it --rm --network=de_zoomcamp_default taxi_ingest:v001 \
+
+NETWORK=pg-network
+# NETWORK=de_zoomcamp_default
+# NETWORK=module-1_default
+CSV_URL="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz"
+docker run -it --rm --network=$NETWORK --name=ingest-data taxi_ingest:v001 \
 --user=root \
 --password=root \
 --host=postgres \
@@ -133,6 +137,10 @@ docker run -it --rm --network=de_zoomcamp_default taxi_ingest:v001 \
 # DOCKER COMPOSE 
 # to run it detached 
 docker compose up -d
+
+
+## CHECK DOCKER RESOURCES # type: 
+docker stats --no-stream
 ```
 
 
