@@ -41,7 +41,7 @@ postgres:13
 docker inspect pg
 
 # connect in other terminal with pgcli
-pgcli -h localhost -p 5432 -u root -d ny_taxi
+pgcli -h localhost -p 5433 -u root -d ny_taxi
 
 # run commands on postgres 
 \dt 
@@ -185,6 +185,32 @@ JOIN      zones zpu ON t."PULocationID" = zpu."LocationID"
 JOIN      zones zdo ON t."DOLocationID" = zdo."LocationID"
 LIMIT     100
 ;
+--GREEN
+SELECT    CONCAT(zpu."Borough", ' / ',zpu."Zone") as pickup_loc,
+FROM      green_taxi_data t
+JOIN      zones zpu ON t."PULocationID" = zpu."LocationID"
+-- ORDER BY  "count" DESC
+;
+
+--GREEN TAXI
+SELECT    CONCAT(zdo."Borough", ' / ',zdo."Zone") as drop_loc
+          COUNT(1) AS "count"
+FROM      green_taxi_data t
+JOIN      zones zdo ON t."DOLocationID" = zdo."LocationID"
+GROUP BY  1
+ORDER BY  "count" DESC
+;
+
+--GREEN TAXI
+SELECT    CONCAT(zdo."Borough", ' / ',zdo."Zone") as drop_loc,
+          max(trip_distance) AS "dist"
+FROM      green_taxi_data t
+JOIN      zones zdo ON t."DOLocationID" = zdo."LocationID"
+GROUP BY  1
+ORDER BY  "dist" DESC
+;
+
+
 
 -- COUNT AND GROUP BY
 SELECT    CAST(tpep_dropoff_datetime AS DATE) AS "day",
@@ -192,6 +218,21 @@ SELECT    CAST(tpep_dropoff_datetime AS DATE) AS "day",
 FROM      yellow_taxi_data t
 GROUP BY  CAST(tpep_dropoff_datetime AS DATE)
 ORDER BY  "day"
+
+--GREEN TAXY COUNT AND GROUP BY
+SELECT    CAST(lpep_dropoff_datetime AS DATE) AS "day",
+          COUNT(1) as "count"
+FROM      green_taxi_data t
+GROUP BY  CAST(lpep_dropoff_datetime AS DATE)
+ORDER BY  "count" DESC
+;
+
+--GREEN TAXY COUNT AND GROUP BY
+SELECT    trip_distance as "dist",
+          
+FROM      green_taxi_data t
+GROUP BY  CAST(lpep_dropoff_datetime AS DATE)
+ORDER BY  "count" DESC
 ;
 
 -- ORDERED BY COUNT
@@ -203,7 +244,21 @@ ORDER BY  "count" DESC
 ;   
 
 -- EXTRACT SOME ANALYTICS AND GROUP BY WITH MORE VARIABLES
-SELECT    CAST(tpep_dropoff_datetime AS DATE) AS "day",
+SELECT    CAST(lpep_dropoff_datetime AS DATE) AS "day",
+          "DOLocationID",
+          COUNT(1)                            AS "count",
+          MAX(total_amount),
+          MAX(passenger_count)
+FROM      green_taxi_data t
+GROUP BY  1,
+          2
+ORDER BY  "day" ASC,
+          "DOLocationID" ASC
+;
+
+
+-- EXTRACT SOME ANALYTICS AND GROUP BY WITH MORE VARIABLES
+SELECT    CAST(lpep_dropoff_datetime AS DATE) AS "day",
           "DOLocationID",
           COUNT(1)                            AS "count",
           MAX(total_amount),

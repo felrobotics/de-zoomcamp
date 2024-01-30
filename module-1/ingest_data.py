@@ -44,13 +44,19 @@ def main(params):
     # taxi trip data
     df = pd.read_csv(csv_name, nrows=100)
     df.head(0).to_sql(name=table_name, con=engine, if_exists="replace")
-    df_iter = pd.read_csv(csv_name, iterator=True, chunksize=25000)
     print(pd.io.sql.get_schema(df, name=table_name, con=engine))
+    df_iter = pd.read_csv(csv_name, iterator=True, chunksize=1000, low_memory=False)
 
+    ctr = 1
     while True:
-        print("New chunck")
         t_start = time()
-        df = next(df_iter)
+        ctr += 1
+        try:
+            df = next(df_iter)
+        except Exception:
+            print(f"ERROR{'@'*30}")
+            break
+        print(f"iteration: {ctr*chunk_size}")
         df.tpep_pickup_datetime = pd.to_datetime(df.tpep_pickup_datetime)
         df.tpep_dropoff_datetime = pd.to_datetime(df.tpep_dropoff_datetime)
         df.to_sql(name=table_name, con=engine, if_exists="append")
